@@ -1,0 +1,71 @@
+# 视频计算机视觉 (Video CV) 与生成技术核心概念速查表
+
+本文档整理了视频处理、行为识别以及前沿视频生成领域的核心架构、训练策略及经典概念。
+
+---
+
+## 1. 经典视频理解与特征提取 (Foundational Video Understanding)
+
+### 1.1 双流网络 (Two-Stream Convolutional Networks)
+* **核心思想：** 模拟人类视觉的双通路机制，分别处理“长啥样”和“怎么动”。
+* **空间流 (Spatial Stream)：** 输入单帧 RGB 图像，提取静态外观特征。
+* **时间流 (Temporal Stream)：** 输入连续光流场 (Optical Flow)，提取动态运动特征。
+* **融合 (Fusion)：** 通过后期融合 (Late Fusion) 综合两路输出得出动作类别。
+
+### 1.2 光流网络 (Optical Flow Networks)
+* **光流概念：** 相邻两帧之间像素点的空间运动轨迹与速度向量 $(u, v)$。
+* **网络作用：** 利用深度学习（如 FlowNet, RAFT）端到端地直接预测光流图，替代耗时的传统数学计算，是提取视频运动特征的基石。
+
+### 1.3 TSN (Temporal Segment Networks, 时间分段网络)
+* **核心痛点：** 解决长视频处理中的显存爆炸和长时记忆缺失问题。
+* **分段采样 (Sparse Sampling)：** * **训练期：** 将视频分段并在每段内**随机抽帧**。起到极强的**数据增强**作用，防止模型对特定静态背景过拟合。
+  * **推理期：** 采用**确定性中心采样**或**密集采样**，保证识别结果的稳定性和高精度。
+* **机制：** 各段特征独立经过网络后，通过全局聚合（如取平均）进行 Consensus 投票。
+
+### 1.4 UCF101 数据集
+* **定位：** 早期视频动作识别领域的“ImageNet”。
+* **内容：** 包含 101 类真实场景下的日常动作（如体育运动、人机交互等），是一个经典的单项分类任务基准。
+
+---
+
+## 2. 序列建模与多模态对齐 (Sequence Modeling & Multimodal)
+
+### 2.1 从 LSTM 到 Transformer
+* **LSTM (长短期记忆网络)：** 通过门控机制（遗忘门、输入门、输出门）控制细胞状态，缓解了传统 RNN 处理序列时的梯度消失问题。
+* **Transformer 跨界视频：** * 将视频帧切分为**时空图块 (Spatiotemporal Patches)**，视作视觉“单词”。
+  * 引入**位置编码 (Positional Encoding)** 标记时空坐标。
+  * 利用**自注意力机制 (Self-Attention)** 在全局范围内捕捉帧内和帧间的因果关系。
+
+### 2.2 现代视频分类逻辑 (CLIP-style)
+* **演进：** 从传统的“输出概率分布 (Softmax) 填空题”转向“跨模态语义对齐的连线题”。
+* **机制：** 视频编码器提取视频向量，文本编码器提取标签向量。在统一隐空间中计算两者的**余弦相似度**，实现 Zero-shot（零样本）识别。
+
+### 2.3 Video Captioning (视频描述生成)
+* **定义：** 让 AI 跨模态“看图写话”，将视频特征解码为自然语言描述。
+* **重要性：** 是训练现代 Text-to-Video 生成大模型（如 Sora）不可或缺的“数据制造机”（Recaptioning 技术）。
+
+---
+
+## 3. 前沿视频生成技术 (Advanced Video Generation)
+
+### 3.1 无限循环 (Infinite Loop) vs. 无限生成 (Infinite Generation)
+* **无限循环 (Infinite Loop)：** 目标是首尾无缝衔接的短视频。通过隐空间融合、循环注意力机制或首尾特征对齐实现。
+* **无限生成 (Infinite Generation)：** 目标是突破时长限制生成长视频，保证时间一致性和剧情演进。主流方案包括 FIFO-Diffusion（队列去噪）、自回归扩展（SkyReels）等。
+
+### 3.2 $\infty$-RoPE 与 Autoregressive Self-Rollout
+* **$\infty$-RoPE (无限旋转位置编码)：** 改进传统位置编码，使其在极长序列生成中保持时空坐标系稳定，防止模型因“没见过的长度”而崩溃。
+* **自回归自演进 (Self-Rollout)：** 模型以自身生成的历史输出为上下文，像滚雪球一样不断推演未来画面，涌现出类似“世界模型”的动作可控 (Action-Controllable) 能力。
+
+### 3.3 训练策略与因果律限制 (Training Strategies & Causality)
+* **Causal Masking (因果掩码)：** 强制生成模型只能看“过去”，不能偷看“未来”，严格遵守时间因果律。
+* **Teacher Forcing (教师强制)：** 训练时始终喂给模型真实答案，易导致推理时的曝光偏差 (Exposure Bias)。
+* **Self-Forcing (自强制)：** 训练时让模型基于自身生成的瑕疵帧继续预测，提升自我纠错的鲁棒性。
+* **Causal-Forcing (因果强制)：** 解决双向教师模型向单向（自回归）学生模型蒸馏时的“结构代沟”问题。通过引入专用的单向老师，消除了模糊妥协，大幅提升长视频生成的视觉保真度和动态幅度。
+
+---
+
+## 4. 文献检索建议 (Literature Search)
+* **判断综述论文：** 关注标题 (`Survey`, `Review`, `Advances`)、超高参考文献数量（>100）、无具体实验图表及特定的期刊板块。
+* **视频生成热点关键词：** * `"Video Diffusion Models" AND "Survey"`
+  * `"Sora" AND "World Model" AND "Survey"`
+  * `"Controllable Video Generation"`

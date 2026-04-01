@@ -46,25 +46,7 @@
 
 ---
 
-## 3. 前沿视频生成技术 (Advanced Video Generation)
-
-### 3.1 无限循环 (Infinite Loop) vs. 无限生成 (Infinite Generation)
-* **无限循环 (Infinite Loop)：** 目标是首尾无缝衔接的短视频。通过隐空间融合、循环注意力机制或首尾特征对齐实现。
-* **无限生成 (Infinite Generation)：** 目标是突破时长限制生成长视频，保证时间一致性和剧情演进。主流方案包括 FIFO-Diffusion（队列去噪）、自回归扩展（SkyReels）等。
-
-### 3.2 $\infty$-RoPE 与 Autoregressive Self-Rollout
-* **$\infty$-RoPE (无限旋转位置编码)：** 改进传统位置编码，使其在极长序列生成中保持时空坐标系稳定，防止模型因“没见过的长度”而崩溃。
-* **自回归自演进 (Self-Rollout)：** 模型以自身生成的历史输出为上下文，像滚雪球一样不断推演未来画面，涌现出类似“世界模型”的动作可控 (Action-Controllable) 能力。
-
-### 3.3 训练策略与因果律限制 (Training Strategies & Causality)
-* **Causal Masking (因果掩码)：** 强制生成模型只能看“过去”，不能偷看“未来”，严格遵守时间因果律。
-* **Teacher Forcing (教师强制)：** 训练时始终喂给模型真实答案，易导致推理时的曝光偏差 (Exposure Bias)。
-* **Self-Forcing (自强制)：** 训练时让模型基于自身生成的瑕疵帧继续预测，提升自我纠错的鲁棒性。
-* **Causal-Forcing (因果强制)：** 解决双向教师模型向单向（自回归）学生模型蒸馏时的“结构代沟”问题。通过引入专用的单向老师，消除了模糊妥协，大幅提升长视频生成的视觉保真度和动态幅度。
-
----
-
-## 4. 文献检索建议 (Literature Search)
+## 3. 文献检索建议 (Literature Search)
 * **判断综述论文：** 关注标题 (`Survey`, `Review`, `Advances`)、超高参考文献数量（>100）、无具体实验图表及特定的期刊板块。
 * **视频生成热点关键词：** * `"Video Diffusion Models" AND "Survey"`
   * `"Sora" AND "World Model" AND "Survey"`

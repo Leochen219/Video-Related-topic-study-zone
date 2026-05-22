@@ -1,10 +1,12 @@
-# Infinity-RoPE 研究路线图：从入门到PhD申请 (修订版)
+# Infinity-RoPE 研究路线图：从视频生成到3D世界模型 (修订版)
 
-> **目标：** 暑假3个月（~12周），每周30小时，深入理解视频生成与长序列自回归生成方向，为PhD/MPhil申请建立扎实的研究基础。
+> **目标：** 暑假3个月（~12周），每周30小时，以 Infinity-RoPE 的因果自回归视频生成为切入点，向上游延伸到3D场景表示（NeRF/3DGS），向下游延伸到世界模型（world dynamics, embodied interaction），形成 "3D表示 → 视频生成 → 世界模型" 的完整研究能力，为 PhD/MPhil 申请建立扎实的研究基础。
+>
+> **导师方向：** 占方能老师（HKUST, World Mind Lab 心象实验室）的研究核心是 **3D World Modeling**——教AI理解和建模3D世界的几何、外观、未来动态，最终让AI感知和交互物理世界。研究方向涵盖 3D 视觉、生成模型、神经渲染、具身智能。本路线图在设计上始终与导师方向保持对齐：视频生成（Infinity-RoPE）是理解世界动态预测的入口，3D场景表示和世界模型是向上/下游必须补齐的能力。
 >
 > **起点：** 已完成 Stanford CS231n（CNN + CV 基础）和 MIT 6.S184（Generative AI，含 labs），对深度学习、计算机视觉、生成模型有扎实的实践基础。
 >
-> **终点：** 能够理解 Infinity-RoPE 的全部技术细节及其在学术版图中的位置，拥有可展示的 side project，并能独立阅读和复现最前沿的视频生成论文。
+> **终点：** 能够理解 Infinity-RoPE 的全部技术细节及其在学术版图中的位置，补齐 3D 场景表示和世界模型的基础知识，拥有可展示的 side project（优先选择与3D/世界模型相关的方向），并能独立阅读和复现最前沿的视频生成与3D世界模型论文。
 
 ---
 
@@ -30,26 +32,36 @@
 ## 一、领域全景图（已掌握标记 ✓）
 
 ```
-                    ┌─────────────────────────────┐
-                    │     Text-to-Video 生成       │
-                    │   (Wan2.1, Sora, CogVideo)   │
-                    └──────────────┬──────────────┘
-                                   │
-          ┌────────────────────────┼────────────────────────┐
-          │                        │                         │
-  ┌───────▼────────┐    ┌─────────▼──────────┐   ┌─────────▼──────────┐
-  │ 扩散/流匹配理论 │    │  因果自回归生成      │   │   模型蒸馏/加速     │
-  │ ✓FM ✓Score ✓SDE│    │ CausVid,SelfForcing │   │ DMD2, SiD, CD      │
-  │  □DDPM □DDIM   │    └─────────┬──────────┘   └────────────────────┘
-  └────────────────┘              │
-                    ┌─────────────┼─────────────┐
-                    │             │              │
-          ┌────────▼──────┐ ┌────▼──────┐ ┌─────▼──────────┐
-          │ 位置编码(RoPE) │ │  KV Cache │ │ 高效注意力机制   │
-          │ YaRN, NTK      │ │ Attention │ │ FlashAttn,      │
-          │                │ │ Sink,SWA  │ │ FlexAttention   │
-          └───────────────┘ └───────────┘ └────────────────┘
+                    ┌─────────────────────────────────────────────────┐
+                    │              生成式世界模型                       │
+                    │    (3D表示 → 视频生成 → 世界动态 → 具身交互)      │
+                    └──────────────────────┬──────────────────────────┘
+                                           │
+        ┌──────────────────────────────────┼──────────────────────────────┐
+        │                                  │                              │
+  ┌─────▼──────────┐          ┌────────────▼────────────┐    ┌───────────▼──────────┐
+  │ 3D场景表示      │          │   Text-to-Video 生成     │    │   世界模型 & 具身智能  │
+  │ NeRF, 3DGS     │          │ (Wan2.1, Sora, CogVideo) │    │ Dreamer, Genie,      │
+  │ Neural Rendering│          └────────────┬────────────┘    │ Flow WM, UniSim      │
+  └────────────────┘                       │                  └──────────────────────┘
+                                           │
+                    ┌──────────────────────┼──────────────────────┐
+                    │                      │                       │
+          ┌─────────▼────────┐  ┌─────────▼──────────┐  ┌────────▼───────────┐
+          │ 扩散/流匹配理论    │  │  因果自回归生成      │  │   模型蒸馏/加速     │
+          │ ✓FM ✓Score ✓SDE  │  │ CausVid,SelfForcing │  │ DMD2, SiD, CD      │
+          │  □DDPM □DDIM     │  └─────────┬──────────┘  └────────────────────┘
+          └──────────────────┘            │
+                              ┌───────────┼───────────┐
+                              │           │            │
+                    ┌─────────▼──────┐ ┌──▼──────┐ ┌───▼────────────┐
+                    │ 位置编码(RoPE)  │ │ KV Cache│ │ 高效注意力机制   │
+                    │ YaRN, NTK       │ │Attention│ │ FlashAttn,      │
+                    │                 │ │Sink,SWA │ │ FlexAttention   │
+                    └────────────────┘ └─────────┘ └────────────────┘
 ```
+
+> **你的定位：** 当前在 "视频生成 → 因果自回归生成" 这条线上（Infinity-RoPE 的直接贡献区域）。3D场景表示和世界模型是需要向上/下游补齐的两个板块——这也是占老师 lab 的核心方向。
 
 ---
 
@@ -173,19 +185,32 @@
 
 ---
 
-### 第7-8周：横向拓展 + 基础设施
+### 第7-8周：横向拓展 + 基础设施 + 3D/世界模型基础
 
-**目标：** 了解视频生成领域的版图，同时补足 GPU 工程能力（这对 PhD 面试也很有用）。
+**目标：** 了解视频生成领域的版图，补足 GPU 工程能力，同时补齐 3D 场景表示和世界模型的入门基础——这是向占老师方向靠拢的关键一步。
 
-#### 论文
+#### 论文：视频生成横向拓展
 
 | # | 论文 | 级别 | 关键点 | 预计时间 |
 |---|------|------|--------|----------|
-| 20 | **Sora 技术报告** (OpenAI, 2024) | **L1** | Scaling 思路、spacetime patches | 3h |
+| 20 | **Sora 技术报告** (OpenAI, 2024) | **L1** | Scaling 思路、spacetime patches、**以 World Simulator 而非 video generator 的视角重读** | 3h |
 | 21 | **CogVideoX** (Zhipu AI, 2024) | **L1** | 开源视频 DiT、3D causal VAE、expert transformer | 4h |
 | 22 | **HunyuanVideo** (Tencent, 2024) | **L1** | 开源最强之一、bilingual text encoder | 4h |
 | 23 | **LongLive** (NVIDIA, 2025) | **L1** | 直接引用 Infinity-RoPE 的后续工作——说明你的研究在领域内的位置 | 4h |
 | 24 | **MovieGen** (Meta, 2024) | **L1** | 音视频联合生成 | 3h |
+
+#### 论文：3D场景表示 + 世界模型（新增——向导师方向靠拢）
+
+| # | 论文 | 级别 | 关键点 | 预计时间 |
+|---|------|------|--------|----------|
+| 25 | **NeRF** (Mildenhall et al., ECCV 2020) | **L2** | 3D 表示的入门必读。MLP + 体渲染 = 隐式3D场景。理解 volumetric rendering 的推导。 | 5h |
+| 26 | **3D Gaussian Splatting** (Kerbl et al., SIGGRAPH 2023) | **L2** | 当前最主流的显式3D表示。对比 NeRF：为什么 3DGS 更快？隐式 vs 显式表示各自的优劣。 | 5h |
+| 27 | **General Neural Gauge Fields** (Zhan et al., ICLR 2023) | **L2** | 占老师代表作——神经场的规范变换。理解他对 "representation" 的思考方式：不是设计新模型，而是设计新范式。**这篇是理解导师研究风格的关键。** | 5h |
+| 28 | **Evolutive Rendering Models** (Zhan et al., 2024) | **L1** | 占老师代表作——渲染模型的自主进化。理解 "模型自己进化" 与 Infinity-RoPE 的 "data-free self-forcing" 之间的范式共鸣。 | 4h |
+| 29 | **World Models** (Ha & Schmidhuber, 2018) | **L1** | 世界模型概念源头——VAE+RNN 学 world dynamics。理解问题设定即可。 | 3h |
+| 30 | **DreamerV3** (Hafner et al., 2023) | **L1** | RL-based world model SOTA。理解 world model 在 RL 中的角色：learns to predict future states, agent plans in latent space。 | 4h |
+| 31 | **UniSim** (Yang et al., ICLR 2024) | **L1** | 从视频数据学习通用世界模拟器——连接视频生成和世界模型的工作。 | 3h |
+| 32 | **Flow Equivariant World Modeling** (Lillemark, Huang, Zhan et al., ICML 2026) | **L1** | 占老师最新世界模型工作。理解他当前在 world model 方向的具体技术路线。 | 4h |
 
 #### 练手：GPU 工程能力
 
@@ -199,22 +224,35 @@
   - 阅读 Infinity-RoPE 中 FP8 的使用方式
   - 如果硬件支持，跑一次 FP8 forward 对比 speed/memory
 
-**预计投入：** 60h（论文 18h + 动手 42h）
+#### 练手：3D 入门
+
+- [ ] **运行 NeRF 经典实现**（`nerf-pytorch` 或 `tiny-cuda-nn` 版本）：
+  - 理解从 2D 图像集合到 3D 隐式表示的训练流程
+  - 体渲染公式手推一遍
+- [ ] **运行 3D Gaussian Splatting 推理**：
+  - 理解 `.ply` 文件中存储的 3D Gaussian 参数
+  - 对比 NeRF 的 MLP 和 3DGS 的显式点云——各自适合什么场景？
+
+**预计投入：** 60h（论文 51h + 动手 9h）
+
+> **注意：** 第7-8周论文量显著增加（21h→51h），3D/世界模型论文以建立框架认知为主，不需要像前6周那样深入推导。3D 动手部分以"跑通+理解"为目标，深入可以放到 Side Project 阶段。
 
 ---
 
 ### 第9-10周：Side Project
 
-**目标：** 选一个方向深入，产出可展示的研究成果。
+**目标：** 选一个方向深入，产出可展示的研究成果。优先选择与 3D/世界模型相关的方向——这与占老师 lab 的研究线具有天然的可延续性。
 
 #### Side Project 选题建议
 
-**难度 ★★★（适合产出 workshop paper，2周可完成）**
+**赛道一：视频生成方向**
+
+难度 ★★★（适合产出 workshop paper，2周可完成）
 
 - **A. RoPE 变体对比实验**：在视频生成场景下对比 standard RoPE, YaRN, NTK-aware, block-relative RoPE 的长视频质量（FVD, CLIP score, 人工评估）
 - **B. KV Cache 策略消融**：对比不同 sink_size / window_size / eviction 策略对 temporal consistency 的影响，找出最优配置
 
-**难度 ★★★★（适合产出 conference submission，4-6周）**
+难度 ★★★★（适合产出 conference submission，4-6周）
 
 - **C. 将 Causal Attention + KV Cache 迁移到另一个 video DiT（如 CogVideoX）**
   - Core change: modify attention mask + KV cache + block-relative RoPE
@@ -223,12 +261,34 @@
   - 替换 KV flush 为 soft scene boundary（跨场景 information propagation）
   - 加入 text-conditioned scene boundary detection
 
-**难度 ★★★★★（主攻项目，可做整个暑假）**
+**赛道二：3D世界模型方向（新增——与导师方向对齐）**
 
-- **E. Multi-modal action control**：将 action-controllable prompting 扩展到 speech + music
-- **F. Efficient distillation**：在 consumer GPU（<24GB）上完成 data-free training（<2 GPU-hours）
+难度 ★★★★（2-3周可出初步结果，与导师讨论后可升级）
 
-> **建议：** 第 7-8 周做完横向拓展后对领域有更全面判断，那时再最终决定 side project 方向。先做 A 或 B 练手（2周能出结果），再看是否 upgrade 到 C/D。
+- **E. Infinity-RoPE 作为 World Model 的 Rollout 质量分析**
+  - 定量评估 autoregressive rollout 的误差累积（预测帧 vs 真实帧在 latent space 的 divergence）
+  - 对比不同 KV cache 策略对长期预测稳定性的影响
+  - 这直接研究 "视频生成模型作为世界模型的可靠性"——世界模型领域的核心问题
+  - **与导师的连接：** 如果 Infinity-RoPE 的 rollout 在长时序上发散，能否用 3D 几何约束来修正？
+
+- **F. 从 Infinity-RoPE 生成的长视频重建 3D 场景**
+  - 用 DUSt3R / MASt3R / 3DGS 从生成的长视频中重建 3D 场景
+  - 评估长视频的 3D 一致性：生成 30s 视频 → 分段重建 3D → 比较各段几何一致性
+  - **与导师的连接：** 直接涉及 "视频生成质量 ↔ 3D几何一致性" 的交叉点
+
+难度 ★★★★★（主攻项目，做完可用于会议投稿）
+
+- **G. 将 Block-Relative RoPE + KV Cache 引入 3D 场景长序列渲染**
+  - 3DGS 沿相机轨迹渲染长视频时，是否也可以使用因果注意力 + KV cache 来加速？
+  - Core idea: 沿时间维度的 3D 场景渲染本质也是 "给定过去帧, 预测当前帧" 的自回归过程
+  - **与导师的连接：** 这是将 Infinity-RoPE 的技术贡献迁移到 3D/神经渲染领域——正是占老师 lab 的核心方向
+
+- **H. 2D Video World Model → 3D-Aware World Model**
+  - 在 Infinity-RoPE 的潜空间上加一个 3D 表示分支（如 feed-forward 3DGS head）
+  - 让世界模型不仅预测像素，还能预测 3D 几何
+  - **与导师的连接：** 直接对接占老师的 "3D World Modeling" 研究方向，最有潜力发展为长期课题
+
+> **建议：** 优先在赛道二中选一个方向（推荐从 E 或 F 开始，两周能出初步数据），用赛道的方向感 + 赛道一的技术积累（视频生成）构成差异化竞争力。第 7-8 周做完 3D/世界模型论文阅读后对领域有更全面判断，那时再最终决定 side project 方向。
 
 **预计投入：** 60h（论文调研 8h + Side Project 52h）
 
@@ -241,12 +301,12 @@
 #### 输出目标
 
 - [ ] **Research Statement 草稿**（2-3 页）
-  - 你对 video generation / long-context generative models 的理解
+  - 你对 video generation → 3D world modeling 这条技术路线的理解
   - Side Project 的 motivation → method → findings
-  - Future directions（从你的 Side Project 自然延伸出去的方向最有说服力）
+  - Future directions（从你的 Side Project 自然延伸到 3D/世界模型方向——与占老师 lab 的研究线形成呼应）
 
 - [ ] **技术博客或 Technical Report**
-  - 例如："Understanding Block-Relative RoPE for Autoregressive Video Generation" 或 "A Survey of Causal Attention in Video Diffusion Models"
+  - 例如："Understanding Block-Relative RoPE for Autoregressive Video Generation" 或 "From Video Generation to 3D World Modeling: A Survey of Cross-Pollination"
   - 或将 Side Project 写成 4-6 页 workshop-style paper（arXiv 发布）
 
 - [ ] **GitHub Portfolio**
@@ -254,25 +314,43 @@
   - 为 Infinity-RoPE 贡献 PR（找 `good first issue` 或改进文档/修复 bug）
 
 - [ ] **目标导师调研（8-12 位）**
+  - 以占老师的研究线（3D World Modeling）为锚点，梳理全球相关组
   - 阅读每位导师近 2 年代表作
   - 记录 lab website、招生状态
   - 针对 2-3 位最心仪的导师，读他们的 paper 并思考 "我能在这个 lab 做什么"
 
-#### 推荐研究组
+#### 推荐研究组（按方向分类）
+
+**3D Vision & Neural Rendering（与占老师方向最直接相关）**
+
+| 学校 | 导师 | 方向 |
+|------|------|------|
+| HKUST | **Fangneng Zhan** (占方能) | 3D World Modeling, Neural Rendering, Generative Models |
+| MIT | Paul Liang, Yilun Du (Harvard) | 3D/4D generation, world models (占老师密切合作者) |
+| MPI-INF | Christian Theobalt | Neural rendering, 3D reconstruction (占老师博后导师) |
+| Stanford | Jiajun Wu | 3D scene understanding, physical reasoning |
+| UC Berkeley | Angjoo Kanazawa | 3D/4D reconstruction, dynamic scenes |
+| Oxford | Andrea Vedaldi, João F. Henriques | 3D vision, neural fields |
+
+**Video Generation & World Models**
 
 | 学校 | 导师 | 方向 |
 |------|------|------|
 | Stanford | Stefano Ermon, Fei-Fei Li | Diffusion models, video generation |
-| MIT | Phillip Isola, William Freeman | Generative models, image/video synthesis |
-| UC Berkeley | Alexei Efros, Angjoo Kanazawa | Video generation, world models |
-| CMU | Jun-Yan Zhu, Katerina Fragkiadaki | Controllable generation, video |
+| MIT | Phillip Isola, William Freeman | Generative models, world models |
+| CMU | Jun-Yan Zhu, Katerina Fragkiadaki | Controllable generation, video world models |
 | NYU | Saining Xie, Rob Fergus | Diffusion models, flow matching |
-| Oxford | Andrew Zisserman, João F. Henriques | Video understanding & generation |
-| CUHK | Dahua Lin, Bolei Zhou | Open-source video models (CogVideo) |
 | NUS | Mike Zheng Shou | Video generation, Show-1, Tune-A-Video |
-| KAIST | Jaegul Choo | Video diffusion, distillation |
-| Tsinghua | Jun Zhu | DMD, diffusion theory |
-| HKUST | Qifeng Chen | Efficient generative models |
+| NTU | Shijian Lu | Image/video synthesis, 3D generation (占老师博导) |
+
+**World Models & Embodied AI**
+
+| 学校 | 导师 | 方向 |
+|------|------|------|
+| UC Berkeley | Sergey Levine | RL + world models for robotics |
+| Google DeepMind | David Ha, Tim Rocktäschel | World Models, Genie, open-ended learning |
+| NVIDIA | Jim Fan (GEAR Lab) | Foundation world models (Cosmos) |
+| CUHK | Bolei Zhou | Scene understanding, embodied AI |
 
 **预计投入：** 60h（输出 40h + 申请准备 20h）
 
@@ -286,11 +364,11 @@
 | 视频扩散 | 2周(3-4) | **1周(2)** | 6.S184 已覆盖 DiT/VAE/LDM |
 | RoPE + Causal Attn | 2周(5-6) | **2周(3-4)** | 无变化，这是核心 |
 | 蒸馏 + 训练 | 2周(7-8) | **2周(5-6)** | 无变化，这是核心 |
-| 横向 + 工程 | 2周(9-10) | **2周(7-8)** | 新增 GPU 工程能力板块 |
-| Side Project | (含在9-10) | **2周(9-10)** | 独立出来 |
-| 输出 + 申请 | 2周(11-12) | **2周(11-12)** | 无变化 |
+| 横向 + 工程 + **3D/世界模型** | 2周(9-10) | **2周(7-8)** | GPU工程 + 视频横向 + **3D/世界模型论文入门（新增——向导师方向靠拢）** |
+| Side Project | (含在9-10) | **2周(9-10)** | 独立出来，**优先选择3D/世界模型方向** |
+| 输出 + 申请 | 2周(11-12) | **2周(11-12)** | **导师调研以3D世界建模为主线** |
 
-**关键变化：** 原计划前 4 周被压缩到 2 周，释放了 2 周时间——1 周给了 GPU 工程能力（第7-8周有了更多时间），1 周给了 Side Project（第9-10周更专注）。
+**关键变化：** 1) 前4周压缩释放2周 → GPU工程+Side Project 2) 第7-8周新增3D/世界模型论文(8篇) 3) Side Project 增加赛道二(3D世界模型) 4) 导师调研向3D方向对齐。
 
 ---
 
@@ -299,10 +377,12 @@
 | 级别 | 数量 | 说明 |
 |------|------|------|
 | **L3** (批判复现) | 1 | Infinity-RoPE |
-| **L2** (方法掌握) | 11 | DDPM, Wan2.1, VDM, SVD, RoPE, YaRN, StreamingLLM, CausVid, Consistency Models, DMD2, Self-Forcing |
-| **L1** (框架理解) | 12 | DDIM, Score-SDE, FlashAttn, DiT, LD/SD, SiD, ODE Reg, Sora, CogVideoX, HunyuanVideo, LongLive, MovieGen |
+| **L2** (方法掌握) | 14 | DDPM, Wan2.1, VDM, SVD, RoPE, YaRN, StreamingLLM, CausVid, Consistency Models, DMD2, Self-Forcing, **NeRF, 3DGS, Neural Gauge Fields (Zhan)** |
+| **L1** (框架理解) | 17 | DDIM, Score-SDE, FlashAttn, DiT, LD/SD, SiD, ODE Reg, Sora, CogVideoX, HunyuanVideo, LongLive, MovieGen, **Evolutive Rendering (Zhan), World Models, DreamerV3, UniSim, Flow Equivariant WM (Zhan)** |
 
-论文阅读总时间：约 110h（原计划 165h，节省的 55h 来自已掌握内容的 L1 化）
+> **新增：** L2 +3 篇（NeRF, 3DGS, Neural Gauge Fields——3D表示基础），L1 +5 篇（世界模型 + 导师代表作的框架理解）
+>
+> 论文阅读总时间：约 143h（原计划 110h，新增 33h 来自 3D/世界模型论文）
 
 ---
 
@@ -335,6 +415,16 @@
 | LongLive | `NVlabs/LongLive` | Infinity-RoPE 后续 |
 | Cosmos | `NVIDIA/Cosmos` | NVIDIA 世界模型 |
 
+### 3D/世界模型项目（与导师方向对齐）
+
+| 项目 | Repo | 用途 |
+|------|------|------|
+| nerfstudio | `nerfstudio-project/nerfstudio` | NeRF 标准实现，3D入门首选 |
+| graphdeco-inria/gaussian-splatting | 3DGS 官方实现 |
+| DUSt3R / MASt3R | `naver/dust3r` | 从图像对重建3D，Side Project F 的工具 |
+| DreamerV3 | `danijar/dreamerv3` | RL-based world model 参考实现 |
+| Flow Equivariant WM | (占老师ICML 2026) | 占老师最新世界模型工作 |
+
 ---
 
 ## 六、每周作息建议
@@ -349,6 +439,7 @@
   - 推导了哪些公式（拍照手写推导过程）
   - 代码练习进展（附 commit link）
   - 本周困惑 / 下周计划
+  - **本周学到了什么与3D世界建模相关的内容？**（保持与导师方向的思维连接）
 ```
 
 ---
@@ -361,9 +452,9 @@
 | 第2周末 | 能解释 3D VAE 和 2D VAE 的本质区别；跑通 Wan2.1 推理，生成第一个视频 |
 | 第4周末 | 能手写 RoPE 公式和 KV cache eviction 算法；跑通 Infinity-RoPE 推理，生成 30s+ 长视频 |
 | 第6周末 | 能解释 DMD KL gradient 与 score matching 的区别；理解 backward simulation 消除 train-test mismatch 的原理 |
-| 第8周末 | 能用 torch.compile / FlexAttention / FSDP 做基本操作；读完所有 L1 论文，对视频生成领域有全局认知 |
-| 第10周末 | Side Project 有初步实验数据（至少一条有意义的 insight） |
-| 第12周末 | 完成 Research Statement + 技术博客；确定目标导师名单 |
+| 第8周末 | 能用 torch.compile / FlexAttention / FSDP 做基本操作；读完所有 L1 论文；能解释 NeRF 体渲染和 3DGS 的核心公式；能用自己的话讲清楚占老师 2-3 篇代表作的 contribution |
+| 第10周末 | Side Project 有初步实验数据（至少一条有意义的 insight）；能清楚回答"我的 side project 如何连接到 3D world modeling" |
+| 第12周末 | 完成 Research Statement + 技术博客；确定目标导师名单；能用一页 PPT 讲清楚 "从视频生成到3D世界模型" 的技术路线图 |
 
 ---
 
@@ -383,11 +474,18 @@
 ## 九、从 Side Project 到论文
 
 1. **Analysis paper (最可行，2-4周)：** 系统性消融实验，发现反直觉结论。投 CVPR/ICCV workshop。
+   - 视频生成线：RoPE变体/KV Cache策略的消融分析
+   - **3D线：** Infinity-RoPE生成视频的3D一致性分析（Side Project E/F）
 2. **Method paper (有挑战，4-8周)：** 迁移 block-relative RoPE + causal attention 到新 domain。
+   - 视频生成线：迁移到 CogVideoX 等其他 DiT
+   - **3D线：** 迁移到 3DGS 长序列渲染（Side Project G）
 3. **Efficiency paper (实用，4-8周)：** 降低 data-free distillation 训练成本到 consumer GPU 可承受范围。
+4. **Cross-domain paper (最长期，8-12周+):** 2D video world model → 3D-aware world model（Side Project H）——这有潜力成为占老师 lab 的长期课题。
 
-*先用 2 周 exploration（跑 baseline、确认 idea 可行），再决定主攻方向。*
+*先用 2 周 exploration（跑 baseline、确认 idea 可行），再决定主攻方向。优先选择能同时积累视频生成深度和3D世界模型广度的方向。*
 
 ---
 
-> **你的优势：** CS231n + MIT 6.S184 的组合让你在 diffusion/flow matching/DiT 这些基础上比大多数暑期实习生强。不要浪费这个基础——不要在第 1-2 周重复你已经会的东西，直接跳到你还不会的（视频 + RoPE + causal attention + distillation）。三个月后，你应该成为视频生成领域最懂 RoPE 和 causal attention 的人之一。Good luck!
+> **你的优势：** CS231n + MIT 6.S184 的组合让你在 diffusion/flow matching/DiT 这些基础上比大多数暑期实习生强。不要浪费这个基础——不要在第 1-2 周重复你已经会的东西，直接跳到你还不会的（视频 + RoPE + causal attention + distillation）。
+>
+> **你的差异化策略：** 深层掌握视频生成的技术细节（Infinity-RoPE 这条线），同时主动向 3D 世界模型方向延伸（占老师 lab 的核心）。三个月后，你应该是同时能聊视频生成的技术细节（RoPE, KV cache, DMD）和世界模型的宏观版图（NeRF, 3DGS, world dynamics）的人。这种 "视频生成深度 + 3D世界模型广度" 的组合，正是占老师 lab 需要的人才画像。Good luck!
